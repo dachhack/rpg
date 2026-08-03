@@ -22,6 +22,14 @@ Then open the URL Vite prints (default: http://localhost:5173).
 ```
 index.html      # Entry page, full-screen canvas container
 src/main.js     # Scene, camera, renderer, lights, and animation loop
+public/images/  # Drop images here; reference them as /images/<name>
+```
+
+Files in `public/` are served as-is from the site root. For example,
+`public/images/hero.png` is available at `/images/hero.png`:
+
+```js
+const texture = new THREE.TextureLoader().load('/images/hero.png');
 ```
 
 The starter scene renders a spinning, bobbing cube over a ground grid, with
