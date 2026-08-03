@@ -98,36 +98,41 @@ DEFAULT_SPEC = CharacterSpec()
 
 PARTS = {
     "front": {
-        # FRONT HAIR -- 9 explicit wedge clusters (frame coords, col = x-6):
-        #   C1 crown spike   base (13-17,4)  tip (16,0)   vertical, leans right
-        #   C2 left spike    base ( 9-11,5)  tip ( 7,2)   45 deg up-left
-        #   C3 right low     base (20-22,5)  tip (25,4)   near-horizontal right
-        #   C4 right small   base (18-19,3)  tip (20,1)   short jab upward
-        #   C5 fringe L      base y6         tip (12,10)  points down over brow
-        #   C6 fringe M      base y6         tip (15, 9)  shortest notch
-        #   C7 fringe R      base y6         tip (17,10)  sweeps to temple x19
-        #   C8 side lock L   (9-10, 6)       tip ( 9,12)  LONG lock by the ear
-        #   C9 side lock R   (20-21,6)       tip (20,10)  short -- unequal to C8
-        # Silhouette tips land at y0/y1/y2/y4: four different heights, one
-        # spike on the left vs two on the right = deliberate asymmetry.
-        # Each wedge: 8 highlight upper-left face, 7/6 body, 5 shade,
+        # FRONT HAIR -- ONE heavy mass swept screen-right, built from
+        # overlapping tapered spikes (frame coords, col = x-6):
+        #   W4 DOMINANT blade  root (18,4) -> tip (25,3)  long swept spike,
+        #                      ~30%+ longer than every other spike; grows out
+        #                      of the mass over a '4' root crease, never a gap
+        #   P1 twin peak       base (11-13,3) -> tip (12,0) tallest, leans left
+        #   P2 twin peak       base (15-17,3) -> tip (15,1) '4' seam splits P1/P2
+        #   jabs               left tip (9,2), right tip (17,1) -- unequal
+        #   fringe             solid y7-8, notches y9, tips y10 over the brow
+        #   side locks         left (10, ->12) LONG, right (18, ->10) short
+        # The mass is SOLID from y3 down -- sky notches only nick the top
+        # two rows, so it reads as one swept mound, not separated tufts.
+        # Clustered '4' warm-brown root cores converge on the crown along
+        # y4-y6. The dominant tip lands far right while the tallest peak
+        # sits left of center: the top silhouette is strongly directional,
+        # so SW and its SE mirror read as two different crowns.
+        # Each spike: 8 highlight upper-left face, 7/6 body, 5 shade,
         # '4' seam only along cluster boundaries (diagonal, staggered).
         "hair": {
             "anchor": (6, 0),
             "grid": [
-                "..........o..........",  # y0  C1 tip
-                ".........o8o..o......",  # y1  C1 neck; C4 tip
-                ".o......o887476o.....",  # y2  C2 tip; C1 body; C4 wedge
-                ".o876o.o8877476o.....",  # y3  C2 wedge / gap / C1+C4
-                "..o87748877766547766o",  # y4  C2 base; crown; C3 spike->tip
-                "..o8774877766654765o.",  # y5  crown full; C3 base
-                "..o87488764776 56o...".replace(" ", "5"),  # y6 locks+fringe
-                "..o76487764766465o...",  # y7  fringe solid over brow
-                "..o65487647656565o...",  # y8  fringe solid, shade lower
-                "..o65.876.765..54....",  # y9  1px notch gaps open
-                "...5..5....5...4.....",  # y10 C5/C7/C9 tips touch brow
-                "...5.................",  # y11 C8 continues alone
-                "...4.................",  # y12 C8 tip (longest lock)
+                "......o..............",  # y0  P1 twin-peak tip
+                ".....o8o.o.o.........",  # y1  P1 neck; P2 tip; jab tip
+                "...o.8874877o........",  # y2  left jab tip; P1+P2 chunky wedges
+                "..o8788747765457766o.",  # y3  mass closes; W4 blade grows out of
+                                          #     the mass over a '4' root crease
+                "..o87787466567766o...",  # y4  ONE heavy mass; W4 blade underside
+                "..o774776645665o.....",  # y5  '4' root cores converge on crown
+                "..o47764665455o......",  # y6  dark warm roots over the fringe
+                "...o6766465545o......",  # y7  fringe solid over brow
+                "...o566545544o.......",  # y8  fringe shaded lower
+                "...o5.65.54.4o.......",  # y9  1px notch gaps open
+                "....5..5..4.4........",  # y10 fringe tips + short right lock
+                "....5................",  # y11 left side lock continues alone
+                "....4................",  # y12 left lock tip (longest)
             ],
         },
         # Face: full-height FFT face -- hairline shadow row, two bright brow
@@ -165,21 +170,23 @@ PARTS = {
                 ".oaAAAAAao..",
             ],
         },
-        # near arm: hangs relaxed, soft elbow bend, glove fist by the thigh.
-        # Inner (torso-side) edge separates with dark tunic 'a', not outline.
+        # near arm: hangs relaxed and CLOSE to the body -- a straight drop
+        # with a soft elbow tuck, glove fist low by the thigh. Deliberately
+        # narrow so it cannot read as a second akimbo arm (the far arm owns
+        # that shape). Inner edge separates with dark tunic 'a', not outline.
         "arm_near": {
-            "anchor": (7, 16),
+            "anchor": (8, 16),
             "grid": [
-                ".occB.",
-                "ocCBa.",
-                "oCCBa.",
-                "oCBBa.",
-                "oCBa..",
-                "oCBa..",
-                ".oBAo.",
-                ".oUTo.",
-                ".oTSo.",
-                "..oo..",
+                ".occ.",
+                "ocCa.",
+                "oCBa.",
+                "oCBa.",
+                ".oCa.",
+                ".oBa.",
+                ".oAo.",
+                ".oUTo",
+                ".oTSo",
+                "..oo.",
             ],
         },
         # far arm: akimbo, elbow out, fist planted on the hip (hangs off the
@@ -216,9 +223,11 @@ PARTS = {
             ],
         },
         # relaxed leg: knee tucks 1px inward, shin angles back out, foot
-        # planted a shade wider -- the counterpose to the straight near leg
+        # planted a shade wider -- the counterpose to the straight near leg.
+        # Anchored 1px wider and 1px higher than the weight leg: the far
+        # foot rests a step back in iso space, so the stance never mirrors.
         "leg_far": {
-            "anchor": (16, 23),
+            "anchor": (17, 22),
             "grid": [
                 "oEEDo..",
                 "oEDDo..",
@@ -237,35 +246,37 @@ PARTS = {
         },
     },
     "back": {
-        # BACK HAIR -- same skull turned 180 deg, so the top silhouette is
-        # the front's mirrored (screen left/right swap) but RE-SHADED: light
-        # stays upper-left in screen space. Clusters (frame coords):
-        #   B1 crown spike   tip (15,0)   vertical (mirror of C1)
-        #   B2 right long    tip (24,2)   45 deg up-right (mirror of C2)
-        #   B3 left low      tip ( 6,4)   near-horizontal left (mirror of C3)
-        #   B4 left small    tip (11,1)   short jab (mirror of C4)
-        #   B5-B8 nape locks radiating from the crown whorl (15,4), split by
-        #   diagonal '4' seams, tapering to UNEQUAL pointed tips:
-        #   (10,11) (12,13) (15,12) (17,14) (19,12) (21,11) -- neck skin
-        #   shows in the notches between tips (head part behind).
+        # BACK HAIR -- same skull turned 180 deg: the swept mass now points
+        # screen-LEFT (the front sweeps screen-right), RE-SHADED so light
+        # stays upper-left in screen space. Spikes (frame coords):
+        #   W4' DOMINANT blade root (11,4) -> tip (6,3)   long swept spike,
+        #                      merged over a '4' root crease like the front
+        #   P1' twin peak      base (18-20,3) -> tip (19,0) tallest, off-center
+        #   P2' twin peak      base (14-16,3) -> tip (16,1) '4' seam splits them
+        #   jabs               right tip (22,2), left tip (14,1) -- unequal
+        #   nape locks radiating from the crown whorl, split by diagonal '4'
+        #   seams, solid to y10, tapering to UNEQUAL pointed tips at
+        #   (12,12) (15,13) (19,12) -- neck skin shows in the notches
+        #   (head part behind). '4' root cores cluster along y4-y6 exactly
+        #   like the front so both views read as the same single mass.
         "hair": {
             "anchor": (6, 0),
             "grid": [
-                ".........o...........",  # y0  B1 tip
-                ".....o..o8o..........",  # y1  B4 tip; B1 neck
-                "....o876488o......o..",  # y2  B4 wedge; B1; B2 tip
-                "....o87487770.o776o..".replace("0", "o"),  # y3
-                "o87648877777654766o..",  # y4  B3 tip+wedge; crown; B2 base
-                ".o8748777766654765o..",  # y5  crown full
-                "..o877487776466565o..",  # y6  mass; seams radiate from crown
-                "..o874776766646555o..",  # y7  left seam drifts in, right out
-                "..o76476646656465o...",  # y8  seams keep drifting (no stripes)
-                "..o6476654655545o....",  # y9  narrowing
-                "...o46656545545o.....",  # y10
-                "....o554.655.54......",  # y11 tips split; skin gaps open
-                ".....54..54..5.......",  # y12 three nape locks stand
-                "......4..4...4.......",  # y13 tips at x12 x15 x19
-                ".............4.......",  # y14 lowest nape tip (x19)
+                ".............o.......",  # y0  P1' twin-peak tip (off-center)
+                "........o.o.o8o......",  # y1  jab tip; P2' tip; P1' neck
+                ".......o8764886.o....",  # y2  P2'+P1' chunky wedges; right jab tip
+                "o8776547776488765o...",  # y3  W4' blade grows out of the mass
+                                          #     over a '4' root crease, tip far L
+                "..o87776566477665o...",  # y4  ONE heavy mass; W4' blade underside
+                "....o877466566455o...",  # y5  '4' root cores converge on crown
+                ".....o76466545554o...",  # y6  seams radiate from the whorl
+                "......o645645545o....",  # y7  seams drift (no stripes)
+                ".....o546554545o.....",  # y8  narrowing nape, still one mass
+                ".....o55465445o......",  # y9
+                "......o5455454o......",  # y10 hugs the skull to the collar
+                "......54.54.44.......",  # y11 skin notches open
+                "......4..5...4.......",  # y12 nape locks stand, unequal
+                ".........4...........",  # y13 lowest nape tip (x15)
             ],
         },
         # nape + narrow neck; skin shows only in notches between lock tips
@@ -343,9 +354,10 @@ PARTS = {
                 ".oooo.",
             ],
         },
-        # relaxed leg from behind: same knee-in / calf-out counterpose
+        # relaxed leg from behind: same knee-in / calf-out counterpose,
+        # same 1px wider / 1px higher stagger as the front view
         "leg_far": {
-            "anchor": (16, 23),
+            "anchor": (17, 22),
             "grid": [
                 "oEEDo..",
                 "oEDDo..",
