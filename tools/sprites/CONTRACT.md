@@ -1,0 +1,120 @@
+# Sprite pipeline contract
+
+FFT-style character sprites, built procedurally from a layered part rig.
+Everything below is the stable API. Do not change frame size, facing order,
+sheet layout, or the `Pose` fields without updating every consumer.
+
+## Frame + sheet format
+
+- Frame canvas: **32x40** px, RGBA, transparent background.
+- Facings, always in this order: **SW, SE, NW, NE** (SW/SE face the camera,
+  NW/NE face away; SE and NE are automatic mirrors — never draw them).
+- Raw sheet `out/sprites/<anim>.png`: one **row per facing** (4 rows),
+  one **column per frame**, 32x40 cells, no padding.
+- Preview `out/preview/<anim>_4x.png`: labeled 4x nearest-neighbor contact
+  sheet for eyeballing. Never shipped to the game.
+
+## Adding a new animation (the whole job)
+
+1. Create `tools/sprites/anims/<name>.py`:
+
+   ```python
+   from composer import Pose
+
+   NAME = "<name>"
+   FRAME_MS = 140            # per-frame duration hint
+
+   def frames():             # -> list[Pose], one per frame
+       return [
+           Pose(),                                   # rest
+           Pose(shift={"arms": (0, -1)}),            # move parts...
+           Pose(shift={"arm_near": (-2, -3)},        # ...or one part
+                weapon="sword"),
+           Pose(hide=frozenset({"arm_far"})),        # or hide parts
+       ]
+   ```
+
+2. Build and eyeball it:
+
+   ```
+   python3 tools/sprites/build.py <name>
+   ```
+
+   Writes `out/sprites/<name>.png` + `out/preview/<name>_4x.png`.
+   Also run `python3 tools/sprites/build.py --base` for the 4-facing still.
+
+That is the entire surface area. A pose is *data*: pixel shifts, hidden
+parts, an optional weapon. No pose ever plots pixels.
+
+## Pose API (composer.py)
+
+```python
+Pose(shift={}, hide=frozenset(), weapon=None)
+compose(facing, pose=None, spec=DEFAULT_SPEC) -> 32x40 RGBA Image
+```
+
+- `shift`: `{part_or_group: (dx, dy)}` in pixels (+x right, +y down).
+  Group and part shifts on the same part **add**.
+- Parts: `leg_far, leg_near, torso, arm_far, arm_near, head, hair`
+  (painted in that back-to-front order; `weapon` is a pseudo-part).
+- Groups: `all, upper (torso+arms+head+hair), head (head+hair), arms, legs`.
+- `weapon`: key into `composer.WEAPONS` (currently `"sword"`). Add new
+  weapons there: per-view `anchor`, `grid`, and `after` (the part it is
+  drawn immediately on top of).
+- "near" parts sit on the left of the drawn (SW/NW) views; mirrored
+  facings swap them visually — that is correct FFT behavior.
+
+Keep shifts small (1-3 px). The idle bob is `shift={"upper": (0, 1)}` —
+that scale of movement is what reads well at 32x40.
+
+## The idle rest pose is the anatomy baseline
+
+The drawn rest pose is deliberately asymmetric — keep new animations
+relative to it, do not "straighten" it:
+
+- screen-right shoulder is 1px lower than the left;
+- front view: the near (screen-left) arm hangs relaxed with a soft elbow
+  bend, fist by the thigh; the far arm is akimbo — elbow out, fist planted
+  ON the hip with a 1px negative-space window between forearm and waist;
+- back view swaps the arms (it is the same body turned 180°): akimbo on
+  screen-left, hanging on screen-right;
+- the near leg is the straight weight leg, the far leg relaxes (knee 1px
+  in, pants a shade darker).
+
+## Editing the art itself (rarely needed)
+
+- Part pixel grids live in `composer.PARTS["front"|"back"]` as strings;
+  the character legend is at the top of `composer.py`. `o` = outline,
+  `x` = eye, `.` = transparent; each material has 5 chars, dark -> light
+  (e.g. hair `4 5 6 7 8`, skin `0 1 2 3 9`, tunic `a A B C c`).
+- **Outlines are selective**: an `o` pixel is resolved at render time to
+  `palette.outline_for(<material it touches>)` — hair rims deep brown,
+  pants rim dark navy, boots rim deep rust. Never expect one global line
+  color. Interior separations (arm against torso, folds, lock partings)
+  use the material's darkest ramp char (`a`, `4`, `d`…), **not** `o`.
+- Colors live in `palette.py` as **5-shade dark->light ramps** sampled from
+  the reference sheet. Ramps hue-shift (shadows cool/teal or deep brown,
+  lights warm toward amber). Never use pure black anywhere.
+- Recolors (new characters/jobs) need **no grid edits**: pass a
+  `CharacterSpec` to `compose`, e.g.
+  `CharacterSpec(hair="hair_brown", tunic="cloth_red")`.
+
+## Style rules (match the reference, public/images/dgnudjp-*.png)
+
+- Head + hair ≈ 40-44% of total height; figure ≈ 36px tall, ≤21px wide.
+- 4-5 shades visible per material + selective tinted outline; light source
+  upper-left (left side gets the `c`/`9`/`8` highlights). Step through
+  adjacent ramp indices at transitions (buffer pixels) — never jump 0→3.
+- No pure black, no oversaturation, no pillow-shading.
+- **Hair is 6-7 tapered spike clusters, never a blob.** Each cluster gets
+  its own 4-step read: `8` highlight on its upper-left face, `7`/`6` body,
+  `5` shaded rim, and a thin `4` core-shadow seam where it overlaps the
+  next cluster. Seams run diagonally along cluster boundaries only —
+  scattered darks read as dither noise, evenly spaced seams read as
+  stripes. Silhouette tips are 1px points; fringe covers the forehead to
+  just above the eyes with pointed notches. The away view is a flame-shaped
+  mass of locks radiating from the crown to pointed nape tips — it must
+  show the same cluster treatment, not one undifferentiated mass.
+- Faces: bright skin base (`9`) with `3`/`2` side shading, a full `1`
+  shadow row under the hairline, 1px dark blue `x` eyes 2px tall.
+- Asymmetry keeps poses alive: never mirror left/right limbs exactly.
