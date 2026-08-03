@@ -15,9 +15,10 @@ RAMPS = {
     "hair_gold":  [(88, 52, 20), (126, 76, 30), (170, 108, 44), (226, 164, 72), (250, 210, 124)],
     # chestnut brown hair (alt)
     "hair_brown": [(52, 32, 22), (88, 54, 34), (128, 82, 50), (170, 118, 72), (210, 162, 108)],
-    # warm slate-indigo cloth (ref pants shadow ~38,40,60 mid ~82,84,120 -
-    # red channel kept close to green so the blue reads warm, FFT-style)
-    "cloth_blue": [(42, 40, 64), (62, 60, 94), (86, 84, 124), (116, 112, 158), (150, 146, 190)],
+    # warm slate-indigo cloth, sepia-shifted shadows (FFT dyes its blues
+    # brown in shadow: dark steps have red >= green, only the light steps
+    # keep a clear blue identity, highlights drift toward warm lilac)
+    "cloth_blue": [(58, 44, 54), (82, 66, 88), (108, 92, 126), (140, 124, 160), (176, 160, 192)],
     # muted warm red cloth
     "cloth_red":  [(70, 28, 24), (112, 40, 30), (156, 58, 36), (198, 94, 54), (228, 142, 94)],
     # moss green cloth
