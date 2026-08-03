@@ -15,10 +15,11 @@ RAMPS = {
     "hair_gold":  [(88, 52, 20), (126, 76, 30), (170, 108, 44), (226, 164, 72), (250, 210, 124)],
     # chestnut brown hair (alt)
     "hair_brown": [(52, 32, 22), (88, 54, 34), (128, 82, 50), (170, 118, 72), (210, 162, 108)],
-    # warm slate-indigo cloth, sepia-shifted shadows (FFT dyes its blues
-    # brown in shadow: dark steps have red >= green, only the light steps
-    # keep a clear blue identity, highlights drift toward warm lilac)
-    "cloth_blue": [(58, 44, 54), (82, 66, 88), (108, 92, 126), (140, 124, 160), (176, 160, 192)],
+    # saturated warm blue cloth (ref pants 32,48,56 / 56,64,88 / 72,80,112
+    # pushed one saturation step like the hqdefault battle blues). Shadows
+    # stay warm -- the deep step leans violet-brown (red ~ green), mids and
+    # lights carry a clear blue identity without going neon.
+    "cloth_blue": [(46, 42, 62), (62, 62, 102), (80, 90, 140), (106, 120, 174), (146, 156, 206)],
     # muted warm red cloth
     "cloth_red":  [(70, 28, 24), (112, 40, 30), (156, 58, 36), (198, 94, 54), (228, 142, 94)],
     # moss green cloth
