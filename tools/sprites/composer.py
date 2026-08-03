@@ -60,10 +60,15 @@ class CharacterSpec:
     accent: str = "accent"
     metal: str = "metal"
     linen: str = "linen"
+    # gear overlays: names into composer.OVERLAYS (see classes.py), drawn
+    # on top of / instead of body parts. A class preset is just a spec.
+    overlays: tuple = ()
+    # optional eye RGB override (e.g. black mage glow); None = palette.EYE
+    eye: tuple = None
 
     def color(self, char):
         if char == "x":
-            return palette.EYE + (255,)
+            return (self.eye or palette.EYE) + (255,)
         slot, idx = CHARMAP[char]
         return palette.ramp(getattr(self, slot))[idx] + (255,)
 
@@ -395,6 +400,20 @@ WEAPONS = {
     },
 }
 
+# ---------------------------------------------------------- registries ----
+# Alternate body part sets, selectable via Pose(body=...). Extra bodies
+# (kneel, prone) register themselves here on import -- see bodies.py.
+BODIES = {"stand": PARTS}
+
+# Gear overlays (helmets, hats, robe skirts, pauldrons...), activated per
+# character via CharacterSpec.overlays. Populated by classes.py. Each entry:
+#   name -> {"front"|"back": {"anchor", "grid", "after": part it is drawn
+#            right after, "attach": part whose Pose shift it follows
+#            (defaults to "after"), "replaces": optional part to suppress
+#            (e.g. a helmet replaces "hair"), "bodies": body names it is
+#            valid for (defaults to ("stand",))}}
+OVERLAYS = {}
+
 # paint order, back to front
 PART_ORDER = ["leg_far", "leg_near", "torso", "arm_far", "arm_near", "head", "hair"]
 
@@ -415,10 +434,11 @@ _VIEW = {"SW": ("front", False), "SE": ("front", True),
 @dataclass
 class Pose:
     """A pose is data: per-part or per-group pixel shifts, hidden parts,
-    and an optional weapon. Group shifts and part shifts add together."""
+    an optional weapon (or tuple of weapons/props), and a body variant."""
     shift: dict = field(default_factory=dict)   # name -> (dx, dy)
     hide: frozenset = frozenset()               # part names to skip
-    weapon: str = None                          # key into WEAPONS
+    weapon: str = None                          # key into WEAPONS, or tuple
+    body: str = "stand"                         # key into BODIES
 
 
 _NEIGHBORS = ((0, 1), (0, -1), (-1, 0), (1, 0),
@@ -471,7 +491,27 @@ def compose(facing, pose=None, spec=DEFAULT_SPEC):
     view, mirrored = _VIEW[facing]
     canvas = Image.new("RGBA", (FRAME_W, FRAME_H), (0, 0, 0, 0))
 
-    weapon = WEAPONS.get(pose.weapon, {}).get(view) if pose.weapon else None
+    parts = BODIES[getattr(pose, "body", "stand")][view]
+    body_name = getattr(pose, "body", "stand")
+
+    # weapons / props: a single key or a tuple of keys into WEAPONS.
+    wkeys = pose.weapon
+    if wkeys is None:
+        wkeys = ()
+    elif isinstance(wkeys, str):
+        wkeys = (wkeys,)
+    weapons = [WEAPONS[k][view] for k in wkeys if view in WEAPONS[k]]
+
+    # gear overlays from the character spec (helmets, skirts, pauldrons)
+    overlays = []
+    suppressed = set(pose.hide)
+    for oname in getattr(spec, "overlays", ()):
+        ov = OVERLAYS[oname].get(view)
+        if not ov or body_name not in ov.get("bodies", ("stand",)):
+            continue
+        overlays.append(ov)
+        if ov.get("replaces"):
+            suppressed.add(ov["replaces"])
 
     def paste(entry, name):
         img = _part_image(entry, spec)
@@ -481,12 +521,23 @@ def compose(facing, pose=None, spec=DEFAULT_SPEC):
         layer.paste(img, (ax + dx, ay + dy), img)
         return Image.alpha_composite(canvas, layer)
 
+    # props with after=None draw BEHIND every body layer (e.g. a shield
+    # seen from the far side of the body)
+    for w in weapons:
+        if w["after"] is None:
+            canvas = paste(w, "weapon")
+
     for name in PART_ORDER:
-        if name in pose.hide:
-            continue
-        canvas = paste(PARTS[view][name], name)
-        if weapon and weapon["after"] == name:
-            canvas = paste(weapon, "weapon")
+        if name not in suppressed and name in parts:
+            canvas = paste(parts[name], name)
+        # overlays draw right after their host part even if it is hidden,
+        # so a helmet still lands when it *replaces* the hair
+        for ov in overlays:
+            if ov["after"] == name:
+                canvas = paste(ov, ov.get("attach", name))
+        for w in weapons:
+            if w["after"] == name:
+                canvas = paste(w, "weapon")
 
     if mirrored:
         canvas = canvas.transpose(Image.FLIP_LEFT_RIGHT)

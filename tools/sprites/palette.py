@@ -55,3 +55,18 @@ PREVIEW_BG = (169, 162, 133)
 def ramp(name):
     """Return the 5-shade ramp (dark -> light) for a named material."""
     return RAMPS[name]
+
+
+# ------------------------------------------------------- added ramps -------
+# Class-variant ramps (knight steel, mage robes...). Registered here at the
+# end of the file, additively, so parallel edits to the base ramps above
+# merge cleanly. Same rules: 5 shades dark -> light, hue-shifted shadows,
+# no pure black.
+RAMPS["steel_blue"] = [  # knight plate: cool steel, warm-drifting highlight
+    (44, 50, 66), (72, 84, 106), (106, 122, 148), (150, 168, 192), (204, 216, 232)]
+RAMPS["cloth_navy"] = [  # black-mage robe: deep indigo, sepia-shifted darks
+    (36, 32, 50), (50, 48, 74), (68, 68, 102), (92, 96, 134), (124, 130, 168)]
+RAMPS["shadow"] = [      # black-mage face-in-shadow "skin"
+    (26, 26, 42), (36, 38, 58), (48, 52, 76), (62, 68, 96), (80, 88, 118)]
+RAMPS["straw"] = [       # wizard-hat straw / pale gold, drier than accent
+    (110, 78, 34), (150, 112, 48), (190, 150, 70), (220, 184, 100), (244, 216, 142)]

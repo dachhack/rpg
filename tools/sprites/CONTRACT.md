@@ -20,6 +20,7 @@ sheet layout, or the `Pose` fields without updating every consumer.
 
    ```python
    from composer import Pose
+   import props, bodies    # only if the anim uses props / body variants
 
    NAME = "<name>"
    FRAME_MS = 140            # per-frame duration hint
@@ -29,8 +30,9 @@ sheet layout, or the `Pose` fields without updating every consumer.
            Pose(),                                   # rest
            Pose(shift={"arms": (0, -1)}),            # move parts...
            Pose(shift={"arm_near": (-2, -3)},        # ...or one part
-                weapon="sword"),
+                weapon="broadsword"),
            Pose(hide=frozenset({"arm_far"})),        # or hide parts
+           Pose(body="kneel"),                       # or swap the body
        ]
    ```
 
@@ -49,7 +51,7 @@ parts, an optional weapon. No pose ever plots pixels.
 ## Pose API (composer.py)
 
 ```python
-Pose(shift={}, hide=frozenset(), weapon=None)
+Pose(shift={}, hide=frozenset(), weapon=None, body="stand")
 compose(facing, pose=None, spec=DEFAULT_SPEC) -> 32x40 RGBA Image
 ```
 
@@ -58,14 +60,77 @@ compose(facing, pose=None, spec=DEFAULT_SPEC) -> 32x40 RGBA Image
 - Parts: `leg_far, leg_near, torso, arm_far, arm_near, head, hair`
   (painted in that back-to-front order; `weapon` is a pseudo-part).
 - Groups: `all, upper (torso+arms+head+hair), head (head+hair), arms, legs`.
-- `weapon`: key into `composer.WEAPONS` (currently `"sword"`). Add new
-  weapons there: per-view `anchor`, `grid`, and `after` (the part it is
-  drawn immediately on top of).
+- `weapon`: key into `composer.WEAPONS` — a string or a **tuple** of them
+  (e.g. `("broadsword", "shield")`). `props.py` registers the armory on
+  import; see below. Weapon entries are per-view `anchor`, `grid`, and
+  `after` (the part they draw right after; `after=None` draws BEHIND the
+  whole body). Shift a held prop with `shift={"weapon": (dx, dy)}`.
+- `body`: key into `composer.BODIES` — `"stand"` (default), `"kneel"`,
+  `"prone"` (registered by `bodies.py`). All parts/groups/hide/shift work
+  identically on every body.
 - "near" parts sit on the left of the drawn (SW/NW) views; mirrored
   facings swap them visually — that is correct FFT behavior.
 
 Keep shifts small (1-3 px). The idle bob is `shift={"upper": (0, 1)}` —
 that scale of movement is what reads well at 32x40.
+
+## Props (props.py)
+
+`import props` registers the armory into `composer.WEAPONS`:
+
+| prop | orientations |
+|---|---|
+| `broadsword` | idle, `_raised` (windup), `_thrust` (stab) |
+| `dagger` | idle, `_thrust` |
+| `bow` | idle, `_nocked` (drawn, arrow level) |
+| `staff` | idle (planted), `_raised` (cast) |
+| `shield` | idle (strapped to the akimbo arm) |
+
+Grips pass through the held hand: front view near fist `(8-9, 23-24)`,
+back view far fist `(23-24, 23-24)`. Idle blades draw in front of the
+arm; the back-view shield draws behind the whole body (`after=None`).
+Orientations that move the hand ship a recommended arm shift:
+`props.hint(key, facing)` returns a dict to merge into `Pose.shift`,
+e.g. `Pose(weapon="bow_nocked", shift=props.hint("bow_nocked", "SW"))`.
+When animating on a non-stand body, move the pseudo-part along:
+`Pose(body="kneel", weapon="broadsword", shift={"weapon": (0, 6)})`.
+
+## Body variants (bodies.py)
+
+`import bodies` registers `kneel` and `prone` into `composer.BODIES`.
+
+- `kneel`: critical / low-HP crouch. Reuses the standing hair/head/
+  torso/arm grids **by reference** ~6px lower (art polish flows through);
+  only the legs are new. Hands sit 6px lower than standing.
+- `prone`: lying flat, head screen-left, one arm flung past the head —
+  the FFT death slump. Front = face-up with closed eyes, back =
+  face-down under splayed hair. Same seven part names, so per-part
+  shifts still work (e.g. twitch `arm_near` for a death flourish).
+
+## Classes & gear (classes.py)
+
+A class is just a `CharacterSpec`: material-slot palette swaps plus
+`overlays=(...)` — names into `composer.OVERLAYS` (helmet, hat_wizard,
+hood, headband, pads_metal, pads_leather, robe_skirt). `import classes`
+registers the overlays and exposes `classes.CLASSES` with presets:
+`squire, knight, black_mage, white_mage, archer`.
+
+```python
+compose("SW", pose, spec=classes.CLASSES["knight"])
+```
+
+Overlay entries are per-view `anchor`/`grid` plus `after` (host part),
+`attach` (part whose shift it follows, default = after), optional
+`replaces` (part it suppresses — helmets replace `hair`), and `bodies`
+(bodies it renders on, default `("stand",)` — so gear silently drops
+off on kneel/prone until kneel-anchored variants are drawn).
+`CharacterSpec.eye` overrides the eye RGB (black mage glow). New ramps
+live at the bottom of `palette.py` (`steel_blue, cloth_navy, shadow,
+straw`) — add more there, never edit the base ramps.
+
+Check your work: `python3 tools/sprites/build.py --demo` writes
+`out/preview/infra_demo_4x.png` — every prop in both drawn views, the
+body variants, and all class presets.
 
 ## The idle rest pose is the anatomy baseline
 
